@@ -32,8 +32,15 @@ static void do_cat(const char *path)
     int n;
 
     fd = open(path, O_RDONLY);
+    /*
     if (fd < 0) {
         die(path);
+    }
+    */
+    if (fd < 0) {
+        printf(path);
+        printf("\n");
+        exit(0);
     }
     for (;;) {
         n = read(fd, buf, sizeof(buf));
