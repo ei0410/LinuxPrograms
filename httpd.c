@@ -5,12 +5,29 @@
 #include <signal.h>
 #include <errno.h>
 
-// prototype
+// prototypes
 static void log_exit(char *fmt, ...);
 static void* xmalloc(size_t sz);
 static void signal_exit(int sig);
 static void trap_signal(int sig, sighandler_t handler);
 static void install_signal_handlers(void);
+static void service(FILE *in, FILE *out, char *docroot);
+
+// structures
+struct HTTPHeaderField {
+	char *name;
+	char *value;
+	struct HTTPHeaderField *next;
+};
+
+struct HTTPRequest {
+	int protocol_minor_version;
+	char *method;
+	char *path;
+	struct HTTPHeaderField *header;
+	char *body;
+	long length;
+};
 
 // output log and error
 static void log_exit(char *fmt, ...)
@@ -61,6 +78,16 @@ static void signal_exit(int sig)
 	log_exit("exit by signal %d", sig);
 }
 
+// read, response and free
+static void service(FILE *in, FILE *out, char *docroot)
+{
+	struct HTTPRequest *req;
+
+	req = read_request(in);
+	respond_to(req, out, docroot);
+	free_request(req);
+}
+
 // main
 int main(int argc, char *argv[])
 {
@@ -69,6 +96,6 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	install_signal_handlers();
-	//service(stdin, stdout, argv[1]);
+	service(stdin, stdout, argv[1]);
 	exit(0);
 }
