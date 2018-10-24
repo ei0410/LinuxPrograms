@@ -5,14 +5,6 @@
 #include <signal.h>
 #include <errno.h>
 
-// prototypes
-static void log_exit(char *fmt, ...);
-static void* xmalloc(size_t sz);
-static void signal_exit(int sig);
-static void trap_signal(int sig, sighandler_t handler);
-static void install_signal_handlers(void);
-static void service(FILE *in, FILE *out, char *docroot);
-
 // structures
 struct HTTPHeaderField {
 	char *name;
@@ -28,6 +20,15 @@ struct HTTPRequest {
 	char *body;
 	long length;
 };
+
+// prototypes
+static void log_exit(char *fmt, ...);
+static void* xmalloc(size_t sz);
+static void signal_exit(int sig);
+static void trap_signal(int sig, sighandler_t handler);
+static void install_signal_handlers(void);
+static void service(FILE *in, FILE *out, char *docroot);
+static void free_request(struct HTTPRequest *req);
 
 // output log and error
 static void log_exit(char *fmt, ...)
@@ -83,9 +84,28 @@ static void service(FILE *in, FILE *out, char *docroot)
 {
 	struct HTTPRequest *req;
 
-	req = read_request(in);
-	respond_to(req, out, docroot);
+	//req = read_request(in);
+	//respond_to(req, out, docroot);
 	free_request(req);
+}
+
+// free all members
+static void free_request(struct HTTPRequest *req)
+{
+	struct HTTPHeaderField *h, *head;
+
+	head = req->header;
+	while (head) {
+		h = head;
+		head = head->next;
+		free(h->name);
+		free(h->value);
+		free(h);
+	}
+	free(req->method);
+	free(req->path);
+	free(req->body);
+	free(req);
 }
 
 // main
