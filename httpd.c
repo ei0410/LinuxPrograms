@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <errno.h>
+#include <ctype.h>
 
 #define MAX_REQUEST_BODY_LENGTH 1024
 #define LINE_BUF_SIZE 1024
@@ -32,7 +33,10 @@ static void trap_signal(int sig, sighandler_t handler);
 static void install_signal_handlers(void);
 static void service(FILE *in, FILE *out, char *docroot);
 static void free_request(struct HTTPRequest *req);
+static char* lookup_header_field_value(struct HTTPRequest *req, char *name);
+static long content_length(struct HTTPRequest *req);
 static struct HTTPHeaderField* read_header_field(FILE *in);
+static void upcase(char *str);
 static void read_request_line(struct HTTPRequest *req, FILE *in);
 static struct HTTPRequest* read_request(FILE *in);
 
@@ -196,6 +200,41 @@ static void read_request_line(struct HTTPRequest *req, FILE *in)
 		log_exit("parse error on request line (3): %s", buf);
 	p += strlen("HTTP/1.");
 	req->protocol_minor_version = atoi(p);
+}
+
+// toupper
+static void upcase(char *str)
+{
+	char *p;
+
+	for (p = str; *p; p++) {
+		*p = (char)toupper((int)*p);
+	}
+}
+
+// get request entity body length
+static long content_length(struct HTTPRequest *req)
+{
+	char *val;
+	long len;
+
+	val = lookup_header_field_value(req, "Content-Length");
+	if (!val) return 0;
+	len = atol(val);
+	if (len < 0) log_exit("negative Content-Length value");
+	return len;
+}
+
+// look for headerField
+static char* lookup_header_field_value(struct HTTPRequest *req, char *name)
+{
+	struct HTTPHeaderField *h;
+
+	for (h = req->header; h; h = h->next) {
+		if (strcasecmp(h->name, name) == 0)
+			return h->value;
+	}
+	return NULL;
 }
 
 // main
