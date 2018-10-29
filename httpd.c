@@ -56,6 +56,8 @@ static void upcase(char *str);
 static void read_request_line(struct HTTPRequest *req, FILE *in);
 static struct HTTPRequest* read_request(FILE *in);
 static struct FileInfo* get_fileinfo(char *docroot, char *urlpath);
+static void method_not_allowed(struct HTTPRequest *req, FILE *out);
+static void free_fileinfo(struct FileInfo *info);
 static char *build_fspath(char *docroot, char *urlpath);
 static void output_common_header_fields(struct HTTPRequest *req, FILE *out, char *status);
 static void do_file_response(struct HTTPRequest *req, FILE *out, char *docroot);
@@ -352,6 +354,29 @@ static void output_common_header_fields(struct HTTPRequest *req, FILE *out, char
 	fprintf(out, "Date: %s\r\n", buf);
 	fprintf(out, "Server: %s/%s\r\n", SERVER_NAME, SERVER_VERSION);
 	fprintf(out, "Connection: close\r\n");
+}
+
+// free fileinfo
+static void free_fileinfo(struct FileInfo *info)
+{
+	free(info->path);
+	free(info);
+}
+
+static void method_not_allowed(struct HTTPRequest *req, FILE *out)
+{
+	output_common_header_fields(req, out, "405 Method Not Allowed");
+	fprintf(out, "Content-Type: text/html\r\n");
+	fprintf(out, "\r\n");
+	fprintf(out, "<html>\r\n");
+	fprintf(out, "<header>\r\n");
+	fprintf(out, "<title>405 Method Not Allowed</title>\r\n");
+	fprintf(out, "</header>\r\n");
+	fprintf(out, "<body>\r\n");
+	fprintf(out, "<p>The request method %s is not allowed</p>\r\n", req->method);
+	fprintf(out, "</body>\r\n");
+	fprintf(out, "</html>\r\n");
+	fflush(out);
 }
 
 // main
