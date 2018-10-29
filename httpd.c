@@ -57,6 +57,9 @@ static void read_request_line(struct HTTPRequest *req, FILE *in);
 static struct HTTPRequest* read_request(FILE *in);
 static struct FileInfo* get_fileinfo(char *docroot, char *urlpath);
 static void method_not_allowed(struct HTTPRequest *req, FILE *out);
+static void not_implemented(struct HTTPRequest *req, FILE *out);
+static void not_found(struct HTTPRequest *req, FILE *out);
+static char* guess_content_type(struct FileInfo *info);
 static void free_fileinfo(struct FileInfo *info);
 static char *build_fspath(char *docroot, char *urlpath);
 static void output_common_header_fields(struct HTTPRequest *req, FILE *out, char *status);
@@ -377,6 +380,43 @@ static void method_not_allowed(struct HTTPRequest *req, FILE *out)
 	fprintf(out, "</body>\r\n");
 	fprintf(out, "</html>\r\n");
 	fflush(out);
+}
+
+static void not_implemented(struct HTTPRequest *req, FILE *out)
+{
+	output_common_header_fields(req, out, "501 Not Implemented");
+	fprintf(out, "Content-Type: text/html\r\n");
+	fprintf(out, "\r\n");
+	fprintf(out, "<html>\r\n");
+	fprintf(out, "<header>\r\n");
+	fprintf(out, "<title>501 Not Implemented</title>\r\n");
+	fprintf(out, "</header>\r\n");
+	fprintf(out, "<body>\r\n");
+	fprintf(out, "<p>The request method %s is not implemented</p>\r\n", req->method);
+	fprintf(out, "</body>\r\n");
+	fprintf(out, "</html>\r\n");
+	fflush(out);
+}
+
+static void not_found(struct HTTPRequest *req, FILE *out)
+{
+	output_common_header_fields(req, out, "404 Not Found");
+	fprintf(out, "Content-Type: text/html\r\n");
+	fprintf(out, "\r\n");
+	fprintf(out, "<html>\r\n");
+	fprintf(out, "<header>\r\n");
+	fprintf(out, "<title>404 Not Found</title>\r\n");
+	fprintf(out, "</header>\r\n");
+	fprintf(out, "<body>\r\n");
+	fprintf(out, "<p>File Not Found</p>\r\n");
+	fprintf(out, "</body>\r\n");
+	fprintf(out, "</html>\r\n");
+	fflush(out);
+}
+
+static char* guess_content_type(struct FileInfo *info)
+{
+	return "text/plain";
 }
 
 // main
