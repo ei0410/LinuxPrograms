@@ -1,0 +1,22 @@
+usage gdb
+
+If you want to use gdb, you should put option "-g".
+example: gcc -g -o hello hello.c
+
+You run command and gdb will show the place where segmentation fault.
+run (command)
+
+If you want to check a row gave uncorrect parameter, gdb will show functions ans arguments.
+backtrace
+
+If you want to check running row, gdb will show list.
+list
+
+If you want to value of variable, you run "print".
+print a
+
+If you want to quit debagged process, you will run "continue".
+continue
+
+If you want to quit dbg, you will run "quit".
+quit
